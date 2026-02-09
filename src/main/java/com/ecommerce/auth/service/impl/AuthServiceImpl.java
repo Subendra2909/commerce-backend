@@ -10,6 +10,7 @@ import com.ecommerce.auth.exception.EmailAlreadyExistsException;
 import com.ecommerce.auth.exception.InvalidCredentialsException;
 import com.ecommerce.auth.repository.UserRepository;
 import com.ecommerce.auth.service.AuthService;
+import com.ecommerce.auth.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -53,10 +55,13 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialsException("Invalid credentials");
         }
 
-        String token = jwtService.generateToken(user.getEmail());
+
+        String accessToken = jwtService.generateToken(user.getEmail(), user.getRole().name());
+        String refreshToken = refreshTokenService.createRefreshToken(user.getEmail());
 
         return AuthResponse.builder()
-                .token(token)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .message("Login successful")
                 .build();
     }
